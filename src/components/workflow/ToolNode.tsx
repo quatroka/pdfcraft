@@ -57,11 +57,14 @@ const categoryBadgeStyles: Record<string, { bg: string; text: string; label: str
 /**
  * Extract an intuitive 1-line parameter summary for the node card
  */
-function getNodeSettingsSummary(toolId: string, settings: Record<string, unknown> | undefined, pt: boolean): string | null {
+function getNodeSettingsSummary(toolId: string, settings: Record<string, unknown> | undefined, locale: string): string | null {
+    const pt = locale === 'pt';
     const tr = (pt ? {
         rotate: 'Rotação', medium: 'Qualidade média', standard: 'algoritmo padrão', split: 'Dividir por página', save: 'Salvar', archive: 'Arquivar', clockwise: 'sentido horário', imageWatermark: 'Marca d’água de imagem', tile: 'repetida', watermark: 'Marca d’água', low: 'Tamanho reduzido', high: 'Alta qualidade', excellent: 'Qualidade máxima', every: 'Dividir a cada', range: 'Intervalo', pageNumber: 'Numeração', starts: 'começando na página', topLeft: 'Superior esquerda', topCenter: 'Superior central', topRight: 'Superior direita', bottomLeft: 'Inferior esquerda', bottomCenter: 'Inferior central', bottomRight: 'Inferior direita', count: 'Quantidade de arquivos', size: 'Tamanho', format: 'Formato', pagesPerSheet: 'páginas por folha', page: 'Páginas', protect: 'Proteção por senha', secure: 'Protegido', flatten: 'Achatar formulários e anotações', contents: 'Sumário', header: 'Cabeçalho', footer: 'Rodapé', headerFooter: 'Cabeçalho e rodapé', background: 'Cor de fundo', textColor: 'Cor do texto', quality: 'Qualidade', color: 'Cor', inputType: 'Tipo de entrada', parameters: 'Parâmetros', download: 'Baixar arquivos de saída', generated: 'arquivo(s) gerado(s)', previewTitle: 'Visualizar rapidamente a saída desta etapa em uma nova guia', previewStep: 'Visualizar etapa', outputType: 'Tipo de saída'
-    } : {
+    } : locale === 'en' ? {
         rotate: 'Rotate', medium: 'Medium quality', standard: 'standard algorithm', split: 'Split by page', save: 'Save', archive: 'Archive', clockwise: 'clockwise', imageWatermark: 'Image watermark', tile: 'tiled', watermark: 'Watermark', low: 'Low size', high: 'High quality', excellent: 'Excellent quality', every: 'Split every', range: 'Range', pageNumber: 'Page numbers', starts: 'starting at page', topLeft: 'Top left', topCenter: 'Top center', topRight: 'Top right', bottomLeft: 'Bottom left', bottomCenter: 'Bottom center', bottomRight: 'Bottom right', count: 'File count', size: 'Size', format: 'Format', pagesPerSheet: 'pages per sheet', page: 'Pages', protect: 'Password protected', secure: 'Secured', flatten: 'Flatten forms and annotations', contents: 'Contents', header: 'Header', footer: 'Footer', headerFooter: 'Header/footer', background: 'Background color', textColor: 'Text color', quality: 'Quality', color: 'Color', inputType: 'Input type', parameters: 'Parameters', download: 'Download output files', generated: 'generated file(s)', previewTitle: 'Quickly preview this step output in a new tab', previewStep: 'Preview step', outputType: 'Output type'
+    } : {
+        rotate: '旋转', medium: '中等质量', standard: '标准算法', split: '按单页拆分', save: '保存', archive: '归档', clockwise: '顺时针', imageWatermark: '图片水印', tile: '平铺', watermark: '水印', low: '低体积', high: '高质量', excellent: '极佳质量', every: '每', range: '范围', pageNumber: '页码', starts: '起', topLeft: '左上', topCenter: '顶部居中', topRight: '右上', bottomLeft: '左下', bottomCenter: '底部居中', bottomRight: '右下', count: '文件数', size: '大小', format: '格式', pagesPerSheet: '拼一版', page: '页码', protect: '设置密码保护', secure: '加密安全', flatten: '扁平化表单与注释', contents: '目录', header: '眉', footer: '脚', headerFooter: '页眉页脚', background: '背景色', textColor: '文字色', quality: '质量', color: '颜色', inputType: '输入类型', parameters: '参数', download: '立即下载产物', generated: '个生成文件', previewTitle: '在新标签页中快速预览当前步骤输出', previewStep: '预览步骤', outputType: '输出类型'
     });
     if (!settings || Object.keys(settings).length === 0) {
         if (toolId === 'rotate-pdf') return `${tr.rotate}: 90° ${tr.clockwise}`;
@@ -95,7 +98,10 @@ function getNodeSettingsSummary(toolId: string, settings: Record<string, unknown
         case 'split-pdf': {
             const mode = String(settings.splitMode || 'every-page');
             if (mode === 'every-n-pages') {
-                return `${tr.every} ${settings.pagesPerSplit || 1} ${pt ? 'páginas' : 'pages'}`;
+                const pageCount = settings.pagesPerSplit || 1;
+                return locale === 'zh' || locale === 'zh-TW'
+                    ? `每 ${pageCount} 页拆分`
+                    : `${tr.every} ${pageCount} ${pt ? 'páginas' : 'pages'}`;
             }
             if (mode === 'ranges' && settings.pageRanges) {
                 return `${tr.range}: ${settings.pageRanges}`;
@@ -108,7 +114,11 @@ function getNodeSettingsSummary(toolId: string, settings: Record<string, unknown
                 'top-left': tr.topLeft, 'top-center': tr.topCenter, 'top-right': tr.topRight,
                 'bottom-left': tr.bottomLeft, 'bottom-center': tr.bottomCenter, 'bottom-right': tr.bottomRight
             };
-            return `${tr.pageNumber}: ${posMap[pos] || pos} (${pt ? 'a partir da página' : 'starting at page'} ${settings.startNumber || 1})`;
+            const startNumber = settings.startNumber || 1;
+            const startLabel = locale === 'zh' || locale === 'zh-TW'
+                ? `第${startNumber}页起`
+                : `${tr.starts} ${startNumber}`;
+            return `${tr.pageNumber}: ${posMap[pos] || pos} (${startLabel})`;
         }
         case 'download-pdf': {
             return `${tr.save}: ${settings.filename || 'output.pdf'}`;
@@ -231,7 +241,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
 
     const inputSocket = getSocketColor(data.acceptedFormats);
     const outputSocket = getSocketColor(data.outputFormat);
-    const settingsSummary = getNodeSettingsSummary(data.toolId, data.settings, locale === 'pt');
+    const settingsSummary = getNodeSettingsSummary(data.toolId, data.settings, locale);
 
     return (
         <div
