@@ -26,6 +26,48 @@ async function createRealPDFFile(name: string): Promise<File> {
 }
 
 describe('Workflow Executor', () => {
+    describe('executeNode - extract-pages', () => {
+        it('passes the workflow page range to the extraction processor', async () => {
+            const pdfDoc = await PDFDocument.create();
+            pdfDoc.addPage([612, 792]).drawText('Page one', { x: 50, y: 50 });
+            pdfDoc.addPage([612, 792]).drawText('Page two', { x: 50, y: 50 });
+            const bytes = await pdfDoc.save();
+            const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+            const file = new File([buffer], 'two-pages.pdf', { type: 'application/pdf' });
+            Object.defineProperty(file, 'arrayBuffer', { value: async () => buffer });
+            const extractNode: WorkflowNode = {
+                id: 'extract-node',
+                type: 'toolNode',
+                position: { x: 0, y: 0 },
+                data: {
+                    toolId: 'extract-pages',
+                    label: 'Extract Pages',
+                    icon: 'files',
+                    category: 'organize-manage',
+                    acceptedFormats: ['.pdf'],
+                    outputFormat: 'pdf',
+                    status: 'idle',
+                    progress: 0,
+                    settings: { pageRange: '2' },
+                },
+            };
+
+            const result = await executeNode(extractNode, [file]);
+
+            expect(result.success).toBe(true);
+            const output = Array.isArray(result.result) ? result.result[0] : result.result;
+            expect(output).toBeInstanceOf(Blob);
+            const outputBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result as ArrayBuffer);
+                reader.onerror = () => reject(reader.error);
+                reader.readAsArrayBuffer(output as Blob);
+            });
+            const extracted = await PDFDocument.load(outputBuffer);
+            expect(extracted.getPageCount()).toBe(1);
+        });
+    });
+
     describe('collectInputFiles', () => {
         const nodes: WorkflowNode[] = [
             {

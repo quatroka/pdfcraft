@@ -401,7 +401,7 @@ export async function executeNode(
                 if (files.length === 0) throw new Error('No input file');
                 const pageRange = String(settings.pageRange || '1');
                 const processor = new ExtractPagesPDFProcessor();
-                return await processor.process(createProcessInput(files, { pageRange }), onProgress);
+                return await processor.process(createProcessInput(files, { pageSelection: pageRange }), onProgress);
             }
 
             case 'delete-pages': {
