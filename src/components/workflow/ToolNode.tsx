@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { ToolNodeData } from '@/types/workflow';
 import * as LucideIcons from 'lucide-react';
@@ -56,56 +57,61 @@ const categoryBadgeStyles: Record<string, { bg: string; text: string; label: str
 /**
  * Extract an intuitive 1-line parameter summary for the node card
  */
-function getNodeSettingsSummary(toolId: string, settings?: Record<string, unknown>): string | null {
+function getNodeSettingsSummary(toolId: string, settings: Record<string, unknown> | undefined, pt: boolean): string | null {
+    const tr = (pt ? {
+        rotate: 'Rotação', medium: 'Qualidade média', standard: 'algoritmo padrão', split: 'Dividir por página', save: 'Salvar', archive: 'Arquivar', clockwise: 'sentido horário', imageWatermark: 'Marca d’água de imagem', tile: 'repetida', watermark: 'Marca d’água', low: 'Tamanho reduzido', high: 'Alta qualidade', excellent: 'Qualidade máxima', every: 'Dividir a cada', range: 'Intervalo', pageNumber: 'Numeração', starts: 'começando na página', topLeft: 'Superior esquerda', topCenter: 'Superior central', topRight: 'Superior direita', bottomLeft: 'Inferior esquerda', bottomCenter: 'Inferior central', bottomRight: 'Inferior direita', count: 'Quantidade de arquivos', size: 'Tamanho', format: 'Formato', pagesPerSheet: 'páginas por folha', page: 'Páginas', protect: 'Proteção por senha', secure: 'Protegido', flatten: 'Achatar formulários e anotações', contents: 'Sumário', header: 'Cabeçalho', footer: 'Rodapé', headerFooter: 'Cabeçalho e rodapé', background: 'Cor de fundo', textColor: 'Cor do texto', quality: 'Qualidade', color: 'Cor', inputType: 'Tipo de entrada', parameters: 'Parâmetros', download: 'Baixar arquivos de saída', generated: 'arquivo(s) gerado(s)', previewTitle: 'Visualizar rapidamente a saída desta etapa em uma nova guia', previewStep: 'Visualizar etapa', outputType: 'Tipo de saída'
+    } : {
+        rotate: 'Rotate', medium: 'Medium quality', standard: 'standard algorithm', split: 'Split by page', save: 'Save', archive: 'Archive', clockwise: 'clockwise', imageWatermark: 'Image watermark', tile: 'tiled', watermark: 'Watermark', low: 'Low size', high: 'High quality', excellent: 'Excellent quality', every: 'Split every', range: 'Range', pageNumber: 'Page numbers', starts: 'starting at page', topLeft: 'Top left', topCenter: 'Top center', topRight: 'Top right', bottomLeft: 'Bottom left', bottomCenter: 'Bottom center', bottomRight: 'Bottom right', count: 'File count', size: 'Size', format: 'Format', pagesPerSheet: 'pages per sheet', page: 'Pages', protect: 'Password protected', secure: 'Secured', flatten: 'Flatten forms and annotations', contents: 'Contents', header: 'Header', footer: 'Footer', headerFooter: 'Header/footer', background: 'Background color', textColor: 'Text color', quality: 'Quality', color: 'Color', inputType: 'Input type', parameters: 'Parameters', download: 'Download output files', generated: 'generated file(s)', previewTitle: 'Quickly preview this step output in a new tab', previewStep: 'Preview step', outputType: 'Output type'
+    });
     if (!settings || Object.keys(settings).length === 0) {
-        if (toolId === 'rotate-pdf') return '旋转: 90° 顺时针';
-        if (toolId === 'compress-pdf') return '中等质量 (标准算法)';
-        if (toolId === 'split-pdf') return '按单页拆分';
-        if (toolId === 'download-pdf') return '保存: output.pdf';
-        if (toolId === 'download-zip') return '归档: output.zip';
+        if (toolId === 'rotate-pdf') return `${tr.rotate}: 90° ${tr.clockwise}`;
+        if (toolId === 'compress-pdf') return `${tr.medium} (${tr.standard})`;
+        if (toolId === 'split-pdf') return tr.split;
+        if (toolId === 'download-pdf') return `${tr.save}: output.pdf`;
+        if (toolId === 'download-zip') return `${tr.archive}: output.zip`;
         return null;
     }
 
     switch (toolId) {
         case 'rotate-pdf': {
             const angle = settings.angle ?? 90;
-            return `旋转: ${angle}°`;
+            return `${tr.rotate}: ${angle}°`;
         }
         case 'add-watermark': {
             const isImage = settings.watermarkType === 'image';
             const isRepeat = Boolean(settings.repeat);
             if (isImage) {
-                return `图片水印${isRepeat ? ' (平铺)' : ''}`;
+                return `${tr.imageWatermark}${isRepeat ? ` (${tr.tile})` : ''}`;
             }
             const text = String(settings.text || 'CONFIDENTIAL');
-            return `${isRepeat ? '平铺水印: ' : '水印: '}"${text}"`;
+            return `${isRepeat ? `${tr.tile} ${tr.watermark}: ` : `${tr.watermark}: `}"${text}"`;
         }
         case 'compress-pdf': {
             const quality = String(settings.quality || 'medium');
-            const qualityMap: Record<string, string> = { low: '低体积', medium: '中等质量', high: '高质量', maximum: '极佳质量' };
+            const qualityMap: Record<string, string> = { low: tr.low, medium: tr.medium, high: tr.high, maximum: tr.excellent };
             const algo = String(settings.algorithm || 'standard');
             return `${qualityMap[quality] || quality} (${algo})`;
         }
         case 'split-pdf': {
             const mode = String(settings.splitMode || 'every-page');
             if (mode === 'every-n-pages') {
-                return `每 ${settings.pagesPerSplit || 1} 页拆分`;
+                return `${tr.every} ${settings.pagesPerSplit || 1} ${pt ? 'páginas' : 'pages'}`;
             }
             if (mode === 'ranges' && settings.pageRanges) {
-                return `范围: ${settings.pageRanges}`;
+                return `${tr.range}: ${settings.pageRanges}`;
             }
-            return '单页拆分';
+            return tr.split;
         }
         case 'page-numbers': {
             const pos = String(settings.position || 'bottom-center');
             const posMap: Record<string, string> = {
-                'top-left': '左上', 'top-center': '顶部居中', 'top-right': '右上',
-                'bottom-left': '左下', 'bottom-center': '底部居中', 'bottom-right': '右下'
+                'top-left': tr.topLeft, 'top-center': tr.topCenter, 'top-right': tr.topRight,
+                'bottom-left': tr.bottomLeft, 'bottom-center': tr.bottomCenter, 'bottom-right': tr.bottomRight
             };
-            return `页码: ${posMap[pos] || pos} (第${settings.startNumber || 1}页起)`;
+            return `${tr.pageNumber}: ${posMap[pos] || pos} (${pt ? 'a partir da página' : 'starting at page'} ${settings.startNumber || 1})`;
         }
         case 'download-pdf': {
-            return `保存: ${settings.filename || 'output.pdf'}`;
+            return `${tr.save}: ${settings.filename || 'output.pdf'}`;
         }
         case 'download-zip': {
             return `ZIP: ${settings.filename || 'output.zip'}`;
@@ -119,48 +125,48 @@ function getNodeSettingsSummary(toolId: string, settings?: Record<string, unknow
             const op = String(settings.operator || 'greater-than');
             const opMap: Record<string, string> = {
                 'greater-than': '>', 'less-than': '<', 'equals': '=',
-                'not-equals': '!=', 'contains': '包含', 'ends-with': '结尾为'
+                'not-equals': '!=', 'contains': pt ? 'contém' : 'contains', 'ends-with': pt ? 'termina com' : 'ends with'
             };
             const typeMap: Record<string, string> = {
-                'file-count': '文件数', 'file-size': '大小', 'file-format': '格式'
+                'file-count': tr.count, 'file-size': tr.size, 'file-format': tr.format
             };
             return `${typeMap[type] || type} ${opMap[op] || op} ${settings.value ?? 1}${type === 'file-size' ? (settings.sizeUnit || 'MB') : ''}`;
         }
         case 'n-up-pdf': {
-            return `${settings.pagesPerSheet || 4} 拼一版 (${settings.pageSize || 'A4'})`;
+            return `${settings.pagesPerSheet || 4} ${tr.pagesPerSheet} (${settings.pageSize || 'A4'})`;
         }
         case 'extract-pages':
         case 'delete-pages': {
-            return `页码: ${settings.pageRange || '1'}`;
+            return `${tr.page}: ${settings.pageRange || '1'}`;
         }
         case 'ocr-pdf': {
             return `OCR: ${settings.language || settings.languages || 'eng'}`;
         }
         case 'encrypt-pdf': {
-            return settings.userPassword ? '设置密码保护' : '加密安全';
+            return settings.userPassword ? tr.protect : tr.secure;
         }
         case 'flatten-pdf': {
-            return '扁平化表单与注释';
+            return tr.flatten;
         }
         case 'table-of-contents': {
-            return `目录: "${settings.title || 'Table of Contents'}"`;
+            return `${tr.contents}: "${settings.title || 'Table of Contents'}"`;
         }
         case 'header-footer': {
             const parts = [];
-            if (settings.headerText) parts.push(`眉: "${settings.headerText}"`);
-            if (settings.footerText) parts.push(`脚: "${settings.footerText}"`);
-            return parts.join(' | ') || '页眉页脚';
+            if (settings.headerText) parts.push(`${tr.header}: "${settings.headerText}"`);
+            if (settings.footerText) parts.push(`${tr.footer}: "${settings.footerText}"`);
+            return parts.join(' | ') || tr.headerFooter;
         }
         case 'background-color': {
-            return `背景色: ${settings.color || '#FFFFFF'}`;
+            return `${tr.background}: ${settings.color || '#FFFFFF'}`;
         }
         case 'text-color': {
-            return `文字色: ${settings.color || '#000000'}`;
+            return `${tr.textColor}: ${settings.color || '#000000'}`;
         }
         default: {
             if (settings.filename) return `${settings.filename}`;
-            if (settings.quality) return `质量: ${settings.quality}`;
-            if (settings.color) return `颜色: ${settings.color}`;
+            if (settings.quality) return `${tr.quality}: ${settings.quality}`;
+            if (settings.color) return `${tr.color}: ${settings.color}`;
             return null;
         }
     }
@@ -173,6 +179,8 @@ function getNodeSettingsSummary(toolId: string, settings?: Record<string, unknow
 const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: ToolNodeProps) => {
     const [isHovered, setIsHovered] = useState(false);
     const { deleteElements } = useReactFlow();
+    const locale = useLocale();
+    const tWorkflow = useTranslations('workflow');
 
     // Get the icon component dynamically
     const iconName = toPascalCase(data.icon);
@@ -223,7 +231,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
 
     const inputSocket = getSocketColor(data.acceptedFormats);
     const outputSocket = getSocketColor(data.outputFormat);
-    const settingsSummary = getNodeSettingsSummary(data.toolId, data.settings);
+    const settingsSummary = getNodeSettingsSummary(data.toolId, data.settings, locale === 'pt');
 
     return (
         <div
@@ -244,7 +252,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                 <button
                     onClick={handleDelete}
                     className="absolute -top-2 -right-2 w-5 h-5 bg-rose-500 hover:bg-rose-600 rounded-full flex items-center justify-center shadow-md transition-colors z-10"
-                    title="Delete node"
+                    title={tWorkflow('deleteNode')}
                 >
                     <X className="w-3 h-3 text-white" />
                 </button>
@@ -260,7 +268,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                     borderColor: '#ffffff',
                 }}
                 className="!w-3.5 !h-3.5 !border-2 shadow-sm transition-transform hover:scale-125"
-                title={`输入类型: ${inputSocket.label}`}
+                title={`${tWorkflow('inputType')}: ${inputSocket.label}`}
             />
 
             {/* Top Category Badge */}
@@ -301,7 +309,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
 
             {/* Inline Parameter Summary Badge */}
             {settingsSummary && (
-                <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-[hsl(var(--color-muted)/0.7)] dark:bg-gray-800/60 border border-[hsl(var(--color-border)/0.6)] text-[11px] text-[hsl(var(--color-foreground))] font-medium truncate" title={`参数: ${settingsSummary}`}>
+                <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-[hsl(var(--color-muted)/0.7)] dark:bg-gray-800/60 border border-[hsl(var(--color-border)/0.6)] text-[11px] text-[hsl(var(--color-foreground))] font-medium truncate" title={`${tWorkflow('parameters')}: ${settingsSummary}`}>
                     <LucideIcons.Sliders className="w-3 h-3 text-[hsl(var(--color-primary))] shrink-0" />
                     <span className="truncate">{settingsSummary}</span>
                 </div>
@@ -349,7 +357,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                         className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-semibold shadow-sm transition-all"
                     >
                         <LucideIcons.Download className="w-3.5 h-3.5" />
-                        <span>立即下载产物</span>
+                        <span>{tWorkflow('download')}</span>
                     </button>
                 </div>
             )}
@@ -360,7 +368,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                     <div className="flex items-center gap-1.5">
                         <LucideIcons.CheckCircle className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
                         <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                            {data.outputFiles.length} 个生成文件
+                            {tWorkflow('generatedFiles', { count: data.outputFiles.length })}
                         </span>
                     </div>
                     {/* Quick Preview Button */}
@@ -377,10 +385,10 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                             }
                         }}
                         className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 transition-colors"
-                        title="在新标签页中快速预览当前步骤输出"
+                        title={tWorkflow('quickPreviewStep')}
                     >
                         <LucideIcons.Eye className="w-3 h-3" />
-                        <span>预览步骤</span>
+                        <span>{tWorkflow('previewStep')}</span>
                     </button>
                 </div>
             )}
@@ -408,7 +416,7 @@ const ToolNode = memo(({ id, data, selected = false, isConnectable = true }: Too
                     borderColor: '#ffffff',
                 }}
                 className="!w-3.5 !h-3.5 !border-2 shadow-sm transition-transform hover:scale-125"
-                title={`输出类型: ${outputSocket.label}`}
+                title={`${tWorkflow('outputType')}: ${outputSocket.label}`}
             />
         </div>
     );

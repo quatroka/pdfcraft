@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { 
     EdgeProps, 
     getBezierPath, 
@@ -30,6 +31,7 @@ export function CustomEdge({
     animated,
     sourceHandleId,
 }: EdgeProps) {
+    const tWorkflow = useTranslations('workflow');
     const { setEdges, getNode } = useReactFlow();
     const [edgePath, labelX, labelY] = getBezierPath({
         sourceX,
@@ -108,7 +110,7 @@ export function CustomEdge({
                         <button
                             onClick={onEdgeDelete}
                             className="w-5 h-5 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
-                            title="删除连接 (Delete)"
+                            title={tWorkflow('deleteConnection') || '删除连接 (Delete)'}
                         >
                             <X className="w-3 h-3" />
                         </button>

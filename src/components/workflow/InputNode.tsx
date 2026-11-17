@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Handle, Position, useReactFlow } from 'reactflow';
 import { ToolNodeData, WorkflowNode } from '@/types/workflow';
 import { Upload, X, FileText, Image as ImageIcon, Trash2, Plus, CheckCircle2, Eye } from 'lucide-react';
@@ -30,6 +31,7 @@ const InputNode: React.FC<InputNodeProps> = ({
     selected = false,
     isConnectable = true,
 }) => {
+    const tWorkflow = useTranslations('workflow');
     const { setNodes, setEdges } = useReactFlow();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -168,10 +170,10 @@ const InputNode: React.FC<InputNodeProps> = ({
                     </div>
                     <div>
                         <h4 className="text-xs font-semibold text-[hsl(var(--color-foreground))]">
-                            {data.label || (isImageNode ? '图片输入 (Image Input)' : 'PDF 输入 (PDF Input)')}
+                            {data.label || (isImageNode ? (tWorkflow('imageInput') || '图片输入 (Image Input)') : (tWorkflow('pdfInput') || 'PDF 输入 (PDF Input)'))}
                         </h4>
                         <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-                            数据输入源 (Input Node)
+                            {tWorkflow('inputNode') || '数据输入源 (Input Node)'}
                         </span>
                     </div>
                 </div>
@@ -181,7 +183,7 @@ const InputNode: React.FC<InputNodeProps> = ({
                         <button
                             type="button"
                             onClick={handleClearAll}
-                            title="清空已选文件"
+                            title={tWorkflow('clearSelectedFiles') || '清空已选文件'}
                             className="p-1 rounded text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                         >
                             <Trash2 size={13} />
@@ -190,7 +192,7 @@ const InputNode: React.FC<InputNodeProps> = ({
                     <button
                         type="button"
                         onClick={handleDeleteNode}
-                        title="删除节点"
+                        title={tWorkflow('deleteNode') || '删除节点'}
                         className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                     >
                         <X size={13} />
@@ -220,7 +222,7 @@ const InputNode: React.FC<InputNodeProps> = ({
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-[11px] text-muted-foreground px-0.5">
                             <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                                <CheckCircle2 size={12} /> 已加载 {files.length} 个文件
+                                <CheckCircle2 size={12} /> {tWorkflow('loadedFiles', { count: files.length }) || `已加载 ${files.length} 个文件`}
                             </span>
                             <div className="flex items-center gap-2">
                                 <button
@@ -230,16 +232,16 @@ const InputNode: React.FC<InputNodeProps> = ({
                                         window.dispatchEvent(new CustomEvent('workflow:open-preview'));
                                     }}
                                     className="flex items-center gap-0.5 text-xs text-[hsl(var(--color-primary))] hover:underline cursor-pointer"
-                                    title="打开实时预览窗口"
+                                    title={tWorkflow('openPreview') || '打开实时预览窗口'}
                                 >
-                                    <Eye size={11} /> 预览
+                                    <Eye size={11} /> {tWorkflow('preview') || '预览'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
                                     className="flex items-center gap-0.5 text-xs text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
                                 >
-                                    <Plus size={11} /> 追加
+                                    <Plus size={11} /> {tWorkflow('addFiles') || '追加'}
                                 </button>
                             </div>
                         </div>
@@ -280,7 +282,7 @@ const InputNode: React.FC<InputNodeProps> = ({
                             }`}
                         >
                             <span className="text-[10px] text-muted-foreground">
-                                拖放或点击可追加更多文件
+                                {tWorkflow('dropOrClickToAdd') || '拖放或点击可追加更多文件'}
                             </span>
                         </div>
                     </div>
@@ -302,10 +304,10 @@ const InputNode: React.FC<InputNodeProps> = ({
                                 <Upload size={16} />
                             </div>
                             <div className="text-[11px] font-medium text-foreground">
-                                拖放文件至此，或 <span className="text-emerald-600 dark:text-emerald-400 underline">点击上传</span>
+                                {tWorkflow('dropFilesOr') || '拖放文件至此，或'} <span className="text-emerald-600 dark:text-emerald-400 underline">{tWorkflow('clickToUpload') || '点击上传'}</span>
                             </div>
                             <div className="text-[10px] text-muted-foreground">
-                                支持 {acceptedExtensions.join(', ')}
+                                {tWorkflow('supportedFormats', { formats: acceptedExtensions.join(', ') }) || `支持 ${acceptedExtensions.join(', ')}`}
                             </div>
                         </div>
                     </div>
@@ -327,7 +329,7 @@ const InputNode: React.FC<InputNodeProps> = ({
             />
             {/* Output Socket Label Badge */}
             <div className="absolute right-2.5 bottom-1 text-[9px] font-mono text-muted-foreground pointer-events-none">
-                输出 ➔
+                {tWorkflow('output') || '输出'} ➔
             </div>
         </div>
     );
