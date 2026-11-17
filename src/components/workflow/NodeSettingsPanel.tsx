@@ -2429,6 +2429,7 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
     const tRoot = useTranslations(); // Root level translations for tool-specific settings
     const messages = useMessages(); // Get raw messages for nested key lookup
     const locale = useLocale() as Locale;
+    const isPortuguese = locale === 'pt';
 
     const [settings, setSettings] = useState<Record<string, unknown>>({});
 
@@ -2443,7 +2444,7 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
     const getToolTitle = (): string => {
         if (!node) return '';
         if (node.data.toolId === 'condition-gateway') {
-            return locale === 'zh' ? '条件分支配置' : 'Condition Gateway';
+            return locale === 'zh' ? '条件分支配置' : isPortuguese ? 'Gateway condicional' : 'Condition Gateway';
         }
         if (node.data.toolId === 'download-pdf') {
             return tWorkflow('downloadPdf') || (locale === 'zh' ? '下载 PDF' : 'Download PDF');
@@ -2634,13 +2635,15 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                         <div className="p-3 rounded-lg bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs text-indigo-900 dark:text-indigo-200 leading-relaxed">
                             {locale === 'zh'
                                 ? '根据流经此节点的文件特征进行规则判定。满足条件的文件流向 True 端口，不满足的文件流向 False 端口。'
-                                : 'Evaluates files dynamically based on your rule. Matching files flow to the True port, otherwise to False.'}
+                                : isPortuguese
+                                    ? 'Avalia os arquivos conforme a regra. Os arquivos que atendem à condição seguem pela saída True; os demais seguem pela False.'
+                                    : 'Evaluates files dynamically based on your rule. Matching files flow to the True port, otherwise to False.'}
                         </div>
 
                         {/* Condition Type */}
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-[hsl(var(--color-foreground))]">
-                                {locale === 'zh' ? '判断维度 (Type)' : 'Dimension'}
+                                {locale === 'zh' ? '判断维度 (Type)' : isPortuguese ? 'Dimensão' : 'Dimension'}
                             </label>
                             <select
                                 value={(settings.conditionType as string) || 'file-count'}
@@ -2655,16 +2658,16 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                                 }}
                                 className="w-full px-3 py-2 text-sm rounded-md border border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))]"
                             >
-                                <option value="file-count">{locale === 'zh' ? '文件数量 (File Count)' : 'File Count'}</option>
-                                <option value="file-size">{locale === 'zh' ? '总文件体积 (File Size)' : 'Total File Size'}</option>
-                                <option value="file-format">{locale === 'zh' ? '文件格式 (File Format / Ext)' : 'File Format / Ext'}</option>
+                                <option value="file-count">{locale === 'zh' ? '文件数量 (File Count)' : isPortuguese ? 'Quantidade de arquivos' : 'File Count'}</option>
+                                <option value="file-size">{locale === 'zh' ? '总文件体积 (File Size)' : isPortuguese ? 'Tamanho total dos arquivos' : 'Total File Size'}</option>
+                                <option value="file-format">{locale === 'zh' ? '文件格式 (File Format / Ext)' : isPortuguese ? 'Formato/extensão do arquivo' : 'File Format / Ext'}</option>
                             </select>
                         </div>
 
                         {/* Operator */}
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-[hsl(var(--color-foreground))]">
-                                {locale === 'zh' ? '比较规则 (Operator)' : 'Operator'}
+                                {locale === 'zh' ? '比较规则 (Operator)' : isPortuguese ? 'Operador' : 'Operator'}
                             </label>
                             <select
                                 value={(settings.operator as string) || (settings.conditionType === 'file-format' ? 'equals' : 'greater-than')}
@@ -2673,19 +2676,19 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                             >
                                 {settings.conditionType === 'file-format' ? (
                                     <>
-                                        <option value="equals">{locale === 'zh' ? '等于 (Equals)' : 'Equals'}</option>
-                                        <option value="not-equals">{locale === 'zh' ? '不等于 (Not Equals)' : 'Not Equals'}</option>
-                                        <option value="contains">{locale === 'zh' ? '包含 (Contains)' : 'Contains'}</option>
-                                        <option value="matches">{locale === 'zh' ? '正则匹配 (Regex Matches)' : 'Regex Matches'}</option>
+                                        <option value="equals">{locale === 'zh' ? '等于 (Equals)' : isPortuguese ? 'Igual a' : 'Equals'}</option>
+                                        <option value="not-equals">{locale === 'zh' ? '不等于 (Not Equals)' : isPortuguese ? 'Diferente de' : 'Not Equals'}</option>
+                                        <option value="contains">{locale === 'zh' ? '包含 (Contains)' : isPortuguese ? 'Contém' : 'Contains'}</option>
+                                        <option value="matches">{locale === 'zh' ? '正则匹配 (Regex Matches)' : isPortuguese ? 'Corresponde à expressão regular' : 'Regex Matches'}</option>
                                     </>
                                 ) : (
                                     <>
-                                        <option value="greater-than">{locale === 'zh' ? '> 大于 (Greater Than)' : '> Greater Than'}</option>
-                                        <option value="less-than">{locale === 'zh' ? '< 小于 (Less Than)' : '< Less Than'}</option>
-                                        <option value="greater-or-equal">{locale === 'zh' ? '≥ 大于等于 (Greater or Equal)' : '≥ Greater or Equal'}</option>
-                                        <option value="less-or-equal">{locale === 'zh' ? '≤ 小于等于 (Less or Equal)' : '≤ Less or Equal'}</option>
-                                        <option value="equals">{locale === 'zh' ? '= 等于 (Equals)' : '= Equals'}</option>
-                                        <option value="not-equals">{locale === 'zh' ? '≠ 不等于 (Not Equals)' : '≠ Not Equals'}</option>
+                                        <option value="greater-than">{locale === 'zh' ? '> 大于 (Greater Than)' : isPortuguese ? '> Maior que' : '> Greater Than'}</option>
+                                        <option value="less-than">{locale === 'zh' ? '< 小于 (Less Than)' : isPortuguese ? '< Menor que' : '< Less Than'}</option>
+                                        <option value="greater-or-equal">{locale === 'zh' ? '≥ 大于等于 (Greater or Equal)' : isPortuguese ? '≥ Maior ou igual a' : '≥ Greater or Equal'}</option>
+                                        <option value="less-or-equal">{locale === 'zh' ? '≤ 小于等于 (Less or Equal)' : isPortuguese ? '≤ Menor ou igual a' : '≤ Less or Equal'}</option>
+                                        <option value="equals">{locale === 'zh' ? '= 等于 (Equals)' : isPortuguese ? '= Igual a' : '= Equals'}</option>
+                                        <option value="not-equals">{locale === 'zh' ? '≠ 不等于 (Not Equals)' : isPortuguese ? '≠ Diferente de' : '≠ Not Equals'}</option>
                                     </>
                                 )}
                             </select>
@@ -2694,7 +2697,7 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                         {/* Value Input */}
                         <div className="space-y-1.5">
                             <label className="block text-sm font-medium text-[hsl(var(--color-foreground))]">
-                                {locale === 'zh' ? '目标阈值 (Target Value)' : 'Target Value'}
+                                {locale === 'zh' ? '目标阈值 (Target Value)' : isPortuguese ? 'Valor de referência' : 'Target Value'}
                             </label>
 
                             {settings.conditionType === 'file-count' && (
@@ -2733,7 +2736,7 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                             {settings.conditionType === 'file-format' && (
                                 <input
                                     type="text"
-                                    placeholder="例如: pdf, docx, png, jpg"
+                                    placeholder={locale === 'zh' ? '例如: pdf, docx, png, jpg' : isPortuguese ? 'Ex.: pdf, docx, png, jpg' : 'e.g. pdf, docx, png, jpg'}
                                     value={(settings.value as string) || ''}
                                     onChange={(e) => handleFieldChange('value', e.target.value)}
                                     className="w-full px-3 py-2 text-sm rounded-md border border-[hsl(var(--color-border))] bg-[hsl(var(--color-background))] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--color-primary))]"
@@ -2744,20 +2747,20 @@ export function NodeSettingsPanel({ node, onClose, onUpdateSettings }: NodeSetti
                         {/* Branch Route Explanation */}
                         <div className="mt-4 p-3 rounded-lg border border-[hsl(var(--color-border))] bg-[hsl(var(--color-muted)/0.3)] space-y-2 text-xs">
                             <p className="font-medium text-[hsl(var(--color-foreground))]">
-                                {locale === 'zh' ? '分支流向指引:' : 'Routing Guide:'}
+                                {locale === 'zh' ? '分支流向指引:' : isPortuguese ? 'Direcionamento dos ramos:' : 'Routing Guide:'}
                             </p>
                             <div className="flex items-start gap-1.5 text-emerald-700 dark:text-emerald-300">
                                 <span className="font-bold">✓ True:</span>
-                                <span>{locale === 'zh' ? '满足条件时流入此端口下游节点' : 'Files proceed here if condition is met'}</span>
+                                <span>{locale === 'zh' ? '满足条件时流入此端口下游节点' : isPortuguese ? 'Os arquivos seguem por aqui quando a condição é atendida' : 'Files proceed here if condition is met'}</span>
                             </div>
                             <div className="flex items-start gap-1.5 text-amber-700 dark:text-amber-300">
                                 <span className="font-bold">✗ False:</span>
-                                <span>{locale === 'zh' ? '不满足条件时流入此端口下游节点' : 'Files proceed here if condition is not met'}</span>
+                                <span>{locale === 'zh' ? '不满足条件时流入此端口下游节点' : isPortuguese ? 'Os arquivos seguem por aqui quando a condição não é atendida' : 'Files proceed here if condition is not met'}</span>
                             </div>
                             <p className="text-[10px] text-[hsl(var(--color-muted-foreground))] pt-1 border-t border-[hsl(var(--color-border)/0.5)]">
                                 {locale === 'zh'
                                     ? '* 执行时未命中的下游分支将被自动跳过并置灰，无需担心额外开销。'
-                                    : '* Inactive branch nodes will be skipped during execution.'}
+                                    : isPortuguese ? '* Os nós do ramo inativo serão ignorados durante a execução.' : '* Inactive branch nodes will be skipped during execution.'}
                             </p>
                         </div>
                     </div>
